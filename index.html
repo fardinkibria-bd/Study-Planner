@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A premium student productivity workspace with study timer, stopwatch, homework tracking, revision planning, and daily goal management."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" type="image/png" href="logo.png" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+
+    <title>Study Planner — Your Premium Productivity Workspace</title>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+      defer
+    ></script>
+    <script src="common.js" defer></script>
+    <script src="header-nav.js" defer></script>
+    <script src="alarm.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="reports.js" defer></script>
+  </head>
+  <body data-page="home" data-mobile-tab="tasks">
+    <div class="wrap">
+      <div id="app-header"></div>
+
+      <div class="dashboard">
+        <div class="main-page active" id="page-home">
+        <div class="grid">
+          <div class="left-col reveal-on-scroll" data-mtab="tasks">
+            <div class="col-label">📌 Daily Focus</div>
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-title">
+                  <div class="icon">✅</div>
+                  Daily To-Do
+                </div>
+                <span class="card-tag" id="todo-count">0/0 done</span>
+              </div>
+              <div class="todo-progress">
+                <div class="prog-meta">
+                  <span>Progress</span><span id="todo-pct">0%</span>
+                </div>
+                <div class="prog-bar">
+                  <div class="prog-fill" id="todo-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div id="todo-list"></div>
+              <div class="quick-add">
+                <input
+                  class="quick-input"
+                  id="task-input"
+                  placeholder="+ Add a task..."
+                  onkeydown="if (event.key === 'Enter') addTask();"
+                />
+                <select id="priority-select">
+                  <option value="high">High</option>
+                  <option value="med" selected>Med</option>
+                  <option value="low">Low</option>
+                </select>
+                <button class="quick-btn" onclick="addTask()">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="right-col reveal-on-scroll"
+            style="transition-delay: 0.1s"
+            data-mtab="clock"
+          >
+            <div class="col-label">🔄 Study Clock</div>
+            <div class="card clock-card">
+              <div class="card-hd">
+                <div class="card-title">
+                  <div class="icon">⏰</div>
+                  Study Clock
+                </div>
+                <span class="card-tag" id="clock-mode-label">Focus Mode</span>
+              </div>
+
+              <div class="clock-tabs" id="clock-tabs">
+                <button
+                  class="clock-tab active"
+                  id="tab-timer"
+                  onclick="switchClockTab('timer')"
+                >
+                  <span class="tab-icon">⏱</span> Timer
+                </button>
+                <button
+                  class="clock-tab"
+                  id="tab-stopwatch"
+                  onclick="switchClockTab('stopwatch')"
+                >
+                  <span class="tab-icon">⏱</span> Stopwatch
+                </button>
+                <button
+                  class="clock-tab"
+                  id="tab-pomodoro"
+                  onclick="switchClockTab('pomodoro')"
+                >
+                  <span class="tab-icon">⏱</span> Pomodoro
+                </button>
+                <div class="tab-indicator" id="tab-indicator"></div>
+              </div>
+
+              <div class="clock-panel active" id="panel-timer">
+                <div class="flip-display">
+                  <div class="flip-unit">
+                    <div class="flip-card" id="flip-h">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Hours</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="flip-m">
+                      <div class="flip-top">25</div>
+                      <div class="flip-bottom">25</div>
+                      <div class="flip-flap flap-top">25</div>
+                      <div class="flip-flap flap-bottom">25</div>
+                    </div>
+                    <div class="flip-label">Mins</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="flip-s">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Secs</div>
+                  </div>
+                </div>
+                <div class="timer-controls">
+                  <button class="timer-btn" onclick="setTimer(25)">
+                    25 min
+                  </button>
+                  <button class="timer-btn" onclick="setTimer(45)">
+                    45 min
+                  </button>
+                  <button class="timer-btn" onclick="setTimer(60)">
+                    60 min
+                  </button>
+                </div>
+                <div class="custom-time" aria-label="Custom timer duration">
+                  <label>
+                    <span>H</span>
+                    <input
+                      id="custom-hours"
+                      type="number"
+                      min="0"
+                      max="23"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                  </label>
+                  <label>
+                    <span>M</span>
+                    <input
+                      id="custom-minutes"
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="00"
+                      inputmode="numeric"
+                    />
+                  </label>
+                  <label>
+                    <span>S</span>
+                    <input
+                      id="custom-seconds"
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                  </label>
+                  <button
+                    class="timer-btn compact"
+                    onclick="applyCustomTimer()"
+                  >
+                    Set
+                  </button>
+                </div>
+                <div class="timer-controls">
+                  <button
+                    class="timer-btn primary"
+                    id="start-btn"
+                    onclick="toggleTimer()"
+                  >
+                    ▶ Start
+                  </button>
+                  <button class="timer-btn" onclick="resetTimer()">
+                    ↺ Reset
+                  </button>
+                </div>
+              </div>
+
+              <div class="clock-panel" id="panel-stopwatch">
+                <div class="flip-display">
+                  <div class="flip-unit">
+                    <div class="flip-card" id="sw-flip-h">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Hours</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="sw-flip-m">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Mins</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="sw-flip-s">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Secs</div>
+                  </div>
+                  <div class="flip-sep sw-ms-sep">.</div>
+                  <div class="flip-unit">
+                    <div class="flip-card flip-card-ms" id="sw-flip-ms">00</div>
+                    <div class="flip-label">Ms</div>
+                  </div>
+                </div>
+                <div class="timer-controls">
+                  <button
+                    class="timer-btn primary"
+                    id="sw-start-btn"
+                    onclick="toggleStopwatch()"
+                  >
+                    ▶ Start
+                  </button>
+                  <button
+                    class="timer-btn"
+                    id="sw-lap-btn"
+                    onclick="lapStopwatch()"
+                    disabled
+                  >
+                    🏁 Lap
+                  </button>
+                  <button class="timer-btn" onclick="resetStopwatch()">
+                    ↺ Reset
+                  </button>
+                </div>
+                <div class="lap-list" id="lap-list"></div>
+              </div>
+
+              <div class="clock-panel" id="panel-pomodoro">
+                <div class="pomodoro-status">
+                  <span class="pomo-phase" id="pomo-phase">Work Session</span>
+                  <span class="pomo-session" id="pomo-session"
+                    >Session 1 / 4</span
+                  >
+                </div>
+                <div class="flip-display">
+                  <div class="flip-unit">
+                    <div class="flip-card" id="pomo-flip-h">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Hours</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="pomo-flip-m">
+                      <div class="flip-top">25</div>
+                      <div class="flip-bottom">25</div>
+                      <div class="flip-flap flap-top">25</div>
+                      <div class="flip-flap flap-bottom">25</div>
+                    </div>
+                    <div class="flip-label">Mins</div>
+                  </div>
+                  <div class="flip-sep">:</div>
+                  <div class="flip-unit">
+                    <div class="flip-card" id="pomo-flip-s">
+                      <div class="flip-top">00</div>
+                      <div class="flip-bottom">00</div>
+                      <div class="flip-flap flap-top">00</div>
+                      <div class="flip-flap flap-bottom">00</div>
+                    </div>
+                    <div class="flip-label">Secs</div>
+                  </div>
+                </div>
+                <div class="timer-controls">
+                  <button
+                    class="timer-btn primary"
+                    id="pomo-start-btn"
+                    onclick="togglePomodoro()"
+                  >
+                    ▶ Start
+                  </button>
+                  <button class="timer-btn" onclick="resetPomodoro()">
+                    ↺ Reset
+                  </button>
+                </div>
+              </div>
+
+              <div class="session-stats">
+                <div class="stat-mini">
+                  <div class="stat-num" id="sessions-done">0</div>
+                  <div class="stat-lbl">Sessions Today</div>
+                </div>
+                <div class="stat-mini">
+                  <div class="stat-num" id="hours-today">0.0</div>
+                  <div class="stat-lbl">Hours Studied</div>
+                </div>
+                <div class="stat-mini">
+                  <div class="stat-num">🔥 <span id="streak">0</span></div>
+                  <div class="stat-lbl">Day Streak</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="section-divider"
+          style="margin-top: 28px; margin-bottom: 12px"
+          data-mtab="tasks"
+        >
+          <div class="div-line"></div>
+          <div class="div-text">Academic Tracking</div>
+          <div class="div-line"></div>
+        </div>
+        <div class="grid" data-mtab="tasks">
+          <div class="reveal-on-scroll">
+            <div class="col-label">📚 Homework</div>
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-title">
+                  <div class="icon">📚</div>
+                  Homework Tracker
+                </div>
+                <span class="card-tag" id="hw-count">0/0 done</span>
+              </div>
+              <div class="todo-progress">
+                <div class="prog-meta">
+                  <span>Progress</span><span id="hw-pct">0%</span>
+                </div>
+                <div class="prog-bar">
+                  <div class="prog-fill" id="hw-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div id="hw-list"></div>
+              <div class="quick-add">
+                <input
+                  class="quick-input"
+                  id="hw-input"
+                  placeholder="+ Add homework..."
+                  onkeydown="if (event.key === 'Enter') addHomework();"
+                />
+                <select id="hw-subject"></select>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  onclick="openSubjectModal()"
+                  aria-label="Manage subjects"
+                >
+                  ⚙️
+                </button>
+                <button class="quick-btn" onclick="addHomework()">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal-on-scroll" style="transition-delay: 0.1s">
+            <div class="col-label">🔄 Revision</div>
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-title">
+                  <div class="icon">🔄</div>
+                  Revision Tracker
+                </div>
+                <span class="card-tag" id="rev-count">0/0 done</span>
+              </div>
+              <div class="todo-progress">
+                <div class="prog-meta">
+                  <span>Progress</span><span id="rev-pct">0%</span>
+                </div>
+                <div class="prog-bar">
+                  <div class="prog-fill" id="rev-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div id="revision-list"></div>
+              <div class="quick-add">
+                <input
+                  class="quick-input"
+                  id="rev-input"
+                  placeholder="+ Add revision topic..."
+                  onkeydown="if (event.key === 'Enter') addRevision();"
+                />
+                <select id="rev-subject"></select>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  onclick="openSubjectModal()"
+                  aria-label="Manage subjects"
+                >
+                  ⚙️
+                </button>
+                <button class="quick-btn" onclick="addRevision()">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="section-divider"
+          style="margin-top: 28px; margin-bottom: 12px"
+          data-mtab="tasks"
+        >
+          <div class="div-line"></div>
+          <div class="div-text">Daily Goals</div>
+          <div class="div-line"></div>
+        </div>
+        <div class="card reveal-on-scroll" data-mtab="tasks">
+          <div class="card-hd">
+            <div class="card-title">
+              <div class="icon">🎯</div>
+              Daily Goals
+            </div>
+            <span class="card-tag" id="goals-count">0/0 done</span>
+          </div>
+          <div class="todo-progress">
+            <div class="prog-meta">
+              <span>Progress</span><span id="goals-pct">0%</span>
+            </div>
+            <div class="prog-bar">
+              <div class="prog-fill" id="goals-fill" style="width: 0%"></div>
+            </div>
+          </div>
+          <div id="goals-list"></div>
+          <div class="quick-add">
+            <input
+              class="quick-input"
+              id="goal-input"
+              placeholder="+ Add a goal..."
+              onkeydown="if (event.key === 'Enter') addGoal();"
+            />
+            <button class="quick-btn" onclick="addGoal()">Add</button>
+          </div>
+        </div>
+
+        <div
+          class="section-divider"
+          style="margin-top: 28px; margin-bottom: 12px"
+          data-mtab="tasks"
+        >
+          <div class="div-line"></div>
+          <div class="div-text">Analytics & Performance</div>
+          <div class="div-line"></div>
+        </div>
+        <div class="card reveal-on-scroll" data-mtab="tasks">
+          <div class="card-hd">
+            <div class="card-title">
+              <div class="icon">📊</div>
+              Study Analytics
+            </div>
+            <span class="card-tag" id="last-refreshed">Today</span>
+          </div>
+          <div class="analytics-grid-4col">
+            <div class="an-card">
+              <div class="an-num" id="an-today">0.0h</div>
+              <div class="an-lbl">Today's Study</div>
+            </div>
+            <div class="an-card">
+              <div class="an-num" id="an-homework">0</div>
+              <div class="an-lbl">Homework Done</div>
+            </div>
+            <div class="an-card">
+              <div class="an-num" id="an-revision">0</div>
+              <div class="an-lbl">Revision Done</div>
+            </div>
+            <div class="an-card">
+              <div class="an-num" id="an-goals">0</div>
+              <div class="an-lbl">Goals Done</div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="main-page" id="page-reports" hidden>
+          <div
+            class="section-divider"
+            style="margin-top: 28px; margin-bottom: 12px"
+          >
+            <div class="div-line"></div>
+            <div class="div-text">Reports</div>
+            <div class="div-line"></div>
+          </div>
+          <section
+            class="reports-section reveal-on-scroll"
+            aria-label="Study reports"
+          >
+            <div
+              class="report-tabs"
+              id="report-tabs"
+              role="tablist"
+              aria-label="Report period"
+            >
+              <button
+                class="report-tab active"
+                id="report-tab-weekly"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="report-panel-weekly"
+                onclick="switchReportTab('weekly')"
+              >
+                <span class="tab-icon">📊</span> Weekly Report
+              </button>
+              <button
+                class="report-tab"
+                id="report-tab-monthly"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="report-panel-monthly"
+                onclick="switchReportTab('monthly')"
+              >
+                <span class="tab-icon">📅</span> Monthly Report
+              </button>
+              <div class="report-tab-indicator" id="report-tab-indicator"></div>
+            </div>
+
+            <div
+              class="report-panel active"
+              id="report-panel-weekly"
+              role="tabpanel"
+              aria-labelledby="report-tab-weekly"
+            >
+              <div id="report-weekly-content"></div>
+            </div>
+            <div
+              class="report-panel"
+              id="report-panel-monthly"
+              role="tabpanel"
+              aria-labelledby="report-tab-monthly"
+            >
+              <div id="report-monthly-content"></div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+    <div id="cursor-trail"></div>
+
+    <div class="routine-dock" aria-live="polite">
+      <button
+        class="routine-toggle"
+        id="routine-toggle"
+        type="button"
+        aria-label="Open weekly study routine"
+        aria-controls="weekly-routine-panel"
+        aria-expanded="false"
+        onclick="toggleRoutinePanel()"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M8 2v4" />
+          <path d="M16 2v4" />
+          <rect width="18" height="18" x="3" y="4" rx="2" />
+          <path d="M3 10h18" />
+          <path d="M8 14h.01" />
+          <path d="M12 14h.01" />
+          <path d="M16 14h.01" />
+          <path d="M8 18h.01" />
+          <path d="M12 18h.01" />
+        </svg>
+      </button>
+      
+      <section
+        class="routine-panel"
+        id="weekly-routine-panel"
+        aria-labelledby="weekly-routine-title"
+        hidden
+      >
+        <div class="routine-panel-hd">
+          <div>
+            <div class="routine-kicker">Weekly Plan</div>
+            <h2 id="weekly-routine-title">Study Routine</h2>
+          </div>
+          <span class="card-tag" id="routine-status">Saved</span>
+        </div>
+        <div class="routine-table-wrap">
+          <table class="routine-table">
+            <caption>
+              Editable weekly study routine
+            </caption>
+            <thead>
+              <tr id="routine-head-row"></tr>
+            </thead>
+            <tbody id="routine-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="subject-modal-backdrop"
+      onclick="if (event.target === this) closeSubjectModal();"
+    >
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">📝 Manage Subjects</h2>
+          <button
+            class="modal-close"
+            onclick="closeSubjectModal()"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="quick-add" style="margin-top: 0; display: flex; gap: 10px">
+          <input
+            type="text"
+            class="quick-input"
+            id="new-subject-input"
+            placeholder="+ Add new subject..."
+            onkeydown="if (event.key === 'Enter') addNewSubject();"
+          />
+          <button
+            class="quick-btn"
+            onclick="addNewSubject()"
+            style="margin: 0; padding: 12px 20px"
+          >
+            Add
+          </button>
+        </div>
+        <div class="modal-error" id="subject-modal-error"></div>
+        <div class="subject-manager-list" id="subject-manager-list"></div>
+        <div class="modal-footer">
+          <button class="modal-btn danger" onclick="confirmResetSubjects()">
+            Reset to Defaults
+          </button>
+          <button class="modal-btn secondary" onclick="closeSubjectModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Mobile Bottom Navigation ──────────────────────────────────────
+         Native-app-style tab bar, mobile-only (see style.css @media
+         max-width:768px). Switches between the existing Tasks / Clock /
+         Reports content in place — no page reload, no URL change, no
+         duplicated components. Desktop uses the .app-nav Home/Reports
+         tabs above instead; this bar is hidden entirely above 768px. -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Primary mobile navigation">
+      <button
+        type="button"
+        class="bottom-nav-tab active"
+        data-mobile-tab="tasks"
+        aria-current="page"
+        onclick="switchMobileTab('tasks')"
+      >
+        <span class="bottom-nav-icon" aria-hidden="true">✅</span>
+        <span class="bottom-nav-label">Tasks</span>
+      </button>
+      <button
+        type="button"
+        class="bottom-nav-tab"
+        data-mobile-tab="clock"
+        onclick="switchMobileTab('clock')"
+      >
+        <span class="bottom-nav-icon" aria-hidden="true">⏰</span>
+        <span class="bottom-nav-label">Clock</span>
+      </button>
+      <button
+        type="button"
+        class="bottom-nav-tab"
+        data-mobile-tab="reports"
+        onclick="switchMobileTab('reports')"
+      >
+        <span class="bottom-nav-icon" aria-hidden="true">📊</span>
+        <span class="bottom-nav-label">Reports</span>
+      </button>
+    </nav>
+  </body>
+</html>
